@@ -1,4 +1,4 @@
-# ListsAndRecursion-0..3
+# ListsAndRecursion-0..4
 defmodule MyList do
 
   def sum([]), do: 0
@@ -28,6 +28,15 @@ defmodule MyList do
     _caesar(96 + (c - 122), n)
   end
   defp _caesar(c, n), do: c + n
+
+  def span(a, b) do
+    _span(a, b)
+  end
+
+  defp _span(a, b) when a <= b do
+    [a | _span(a + 1, b)]
+  end
+  defp _span(_a, _b), do: []
 end
 
 
