@@ -58,8 +58,34 @@ defmodule Eleven do
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(". ")
   end
+end
 
-  {:ok, file} = File.open("sales.csv")
-  IO.read(file, :line)
-  Enum.each IO.stream(file, :line), &IO.write(&1)
+defmodule Bookshelf do
+
+  @tax_rates [NC: 0.075, TX: 0.08]
+
+  def sales_tax(orders) do
+    for order <- orders, do: sales_tax_order(order)
+  end
+
+  def sales_tax_order([id: id, ship_to: ship_to, net_amount: net]) do
+    total = net * (Keyword.get(@tax_rates, ship_to, 0) + 1)
+    [id: id, ship_to: ship_to, net_amount: net, total: total]
+  end
+
+  def parse_sales_file(file) do
+    {:ok, file} = File.open(file)
+    _headers = IO.read(file, :line)
+    IO.stream(file, :line)
+    |> Stream.map(&String.strip/1)
+    |> Stream.map(&String.split(&1, ","))
+    |> Stream.map(&Enum.zip([:id, :ship_to, :net_amount], &1))
+    |> Stream.map(&Keyword.update!(&1, :id, fn(item) ->
+        String.to_integer(item) end))
+    |> Stream.map(&Keyword.update!(&1, :ship_to, fn(item) ->
+        String.to_atom(String.slice(item, 1..2)) end))
+    |> Stream.map(&Keyword.update!(&1, :net_amount, fn(item) ->
+        String.to_float(item) end))
+    |> sales_tax
+  end
 end
