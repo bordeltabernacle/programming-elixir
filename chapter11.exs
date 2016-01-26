@@ -74,18 +74,20 @@ defmodule Bookshelf do
   end
 
   def parse_sales_file(file) do
-    {:ok, file} = File.open(file)
-    _headers = IO.read(file, :line)
-    IO.stream(file, :line)
-    |> Stream.map(&String.strip/1)
-    |> Stream.map(&String.split(&1, ","))
+    File.stream!(file)
+    |> Stream.drop(1)
+    |> Stream.map(&parse_line/1)
     |> Stream.map(&Enum.zip([:id, :ship_to, :net_amount], &1))
-    |> Stream.map(&Keyword.update!(&1, :id, fn(item) ->
-        String.to_integer(item) end))
-    |> Stream.map(&Keyword.update!(&1, :ship_to, fn(item) ->
-        String.to_atom(String.slice(item, 1..2)) end))
-    |> Stream.map(&Keyword.update!(&1, :net_amount, fn(item) ->
-        String.to_float(item) end))
     |> sales_tax
+  end
+
+  def parse_line(line) do
+    line
+    |> String.strip
+    |> String.split(",")
+    |> List.update_at(0, &String.to_integer/1)
+    |> List.update_at(1, &String.lstrip(&1, ?:))
+    |> List.update_at(1, &String.to_atom/1)
+    |> List.update_at(2, &String.to_float/1)
   end
 end
